@@ -16,15 +16,8 @@
 package org.tanzu.reviewer;
 
 import com.embabel.agent.config.annotation.EnableAgents;
-import com.embabel.agent.core.Agent;
-import com.embabel.agent.core.AgentPlatform;
-import com.embabel.agent.core.AgentProcess;
-import com.embabel.agent.core.ProcessOptions;
-import com.embabel.agent.domain.io.UserInput;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
 
 @SpringBootApplication
@@ -34,19 +27,19 @@ class TemplateApplication {
         SpringApplication.run(TemplateApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner commandLineRunner(AgentPlatform agentPlatform) {
-        return args -> {
-            for (Agent agent : agentPlatform.agents()) {
-                System.out.println(agent);
-                ProcessOptions processOptions = ProcessOptions.builder().build();
-                AgentProcess agentProcess = agentPlatform.createAgentProcessFrom(agent,
-                        processOptions,
-                        new UserInput("Write a story about a risky poker game"));
-
-                AgentProcess completedProcess = agentPlatform.start(agentProcess).get();
-                System.out.println(completedProcess.statusReport());
-            }
-        };
-    }
+//    @Bean
+//    CommandLineRunner commandLineRunner(AgentPlatform agentPlatform) {
+//        return args -> {
+//            for (Agent agent : agentPlatform.agents()) {
+//                System.out.println(agent);
+//                ProcessOptions processOptions = ProcessOptions.builder().build();
+//                AgentProcess agentProcess = agentPlatform.createAgentProcessFrom(agent,
+//                        processOptions,
+//                        new UserInput("Write a story about a risky poker game"));
+//
+//                AgentProcess completedProcess = agentPlatform.start(agentProcess).get();
+//                System.out.println(completedProcess.statusReport());
+//            }
+//        };
+//    }
 }
