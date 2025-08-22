@@ -25,12 +25,14 @@ public class RabbitMQConfiguration {
     @Bean
     public Queue requestQueue() {
         return QueueBuilder.durable(REQUEST_QUEUE)
+                .withArgument("x-message-ttl", 300000) // 5 minutes TTL
                 .build();
     }
 
     @Bean
     public Queue replyQueue() {
         return QueueBuilder.durable(REPLY_QUEUE)
+                .withArgument("x-message-ttl", 300000) // 5 minutes TTL
                 .build();
     }
 
