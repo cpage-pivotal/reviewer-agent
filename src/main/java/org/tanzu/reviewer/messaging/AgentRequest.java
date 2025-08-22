@@ -2,7 +2,7 @@ package org.tanzu.reviewer.messaging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AgentRequestMessage {
+public class AgentRequest {
 
     @JsonProperty("prompt")
     private String prompt;
@@ -13,11 +13,11 @@ public class AgentRequestMessage {
     @JsonProperty("timestamp")
     private long timestamp;
 
-    public AgentRequestMessage() {
+    public AgentRequest() {
         this.timestamp = System.currentTimeMillis();
     }
 
-    public AgentRequestMessage(String prompt, String correlationId) {
+    public AgentRequest(String prompt, String correlationId) {
         this();
         this.prompt = prompt;
         this.correlationId = correlationId;

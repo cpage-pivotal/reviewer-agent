@@ -43,7 +43,7 @@ public class AgentRequestListener {
      */
     @RabbitListener(queues = RabbitMQConfiguration.REQUEST_QUEUE)
     public void handleAgentRequest(
-            @Payload AgentRequestMessage requestMessage,
+            @Payload AgentRequest requestMessage,
             @Header(value = "correlationId", required = false) String headerCorrelationId) {
 
         logger.info("Received agent request: {}", requestMessage);

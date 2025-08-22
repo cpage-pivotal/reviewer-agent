@@ -10,7 +10,7 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tanzu.reviewer.messaging.AgentProcessCorrelationService;
-import org.tanzu.reviewer.messaging.AgentReplyMessage;
+import org.tanzu.reviewer.messaging.AgentResponse;
 import org.tanzu.reviewer.messaging.RabbitMQConfiguration;
 
 public class ResponsePublisher implements OutputChannel {
@@ -56,7 +56,7 @@ public class ResponsePublisher implements OutputChannel {
     private void sendReplyMessage(String content, String correlationId, String processId, String name) {
         try {
             // Create the reply message
-            AgentReplyMessage replyMessage = new AgentReplyMessage(content, correlationId, processId, name);
+            AgentResponse replyMessage = new AgentResponse(content, correlationId, processId, name);
 
             logger.info("Sending reply message to queue for correlationId: {}", correlationId);
             logger.debug("Reply message content: {}", replyMessage);
