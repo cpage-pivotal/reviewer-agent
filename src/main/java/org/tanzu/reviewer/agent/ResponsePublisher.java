@@ -32,13 +32,13 @@ public class ResponsePublisher implements OutputChannel {
             String content = messageEvent.getContent();
             String name = messageEvent.getName();
 
-            logger.info("Processing AssistantMessageOutputChannelEvent for process: {}", processId);
+            logger.info("Processing AssistantMessageOutputChannelEvent for process: {}, name: {}", processId, name);
 
             // Get the correlation ID for this process
             String correlationId = correlationService.getCorrelationId(processId);
 
             if (correlationId != null) {
-                // Send reply message to RabbitMQ
+                // Send reply message to RabbitMQ with proper completion flags
                 sendReplyMessage(content, correlationId, processId, name);
             } else {
                 logger.warn("No correlation ID found for process {}, cannot send RabbitMQ reply", processId);
@@ -51,14 +51,48 @@ public class ResponsePublisher implements OutputChannel {
     }
 
     /**
-     * Send a reply message to the RabbitMQ reply queue
+     * Send a reply message to the RabbitMQ reply queue.
+     * Decodes completion flags that were set by the agent in the action name.
+     * ResponsePublisher does not decide completion - it only passes through agent's decision.
      */
     private void sendReplyMessage(String content, String correlationId, String processId, String name) {
         try {
-            // Create the reply message
-            AgentResponse replyMessage = new AgentResponse(content, correlationId, processId, name);
+            // Decode completion flags from enhanced action name set by the agent
+            String actionName = name;
+            boolean isPartial = false;
+            boolean isComplete = true; // Default to complete for backward compatibility
 
-            logger.info("Sending reply message to queue for correlationId: {}", correlationId);
+            if (name != null && name.contains("|")) {
+                // Parse enhanced action name: "craftStory|partial:true|complete:false"
+                String[] parts = name.split("\\|");
+                actionName = parts[0]; // Extract original action name
+
+                for (String part : parts) {
+                    if (part.startsWith("partial:")) {
+                        isPartial = Boolean.parseBoolean(part.substring("partial:".length()));
+                    } else if (part.startsWith("complete:")) {
+                        isComplete = Boolean.parseBoolean(part.substring("complete:".length()));
+                    }
+                }
+
+                logger.debug("Decoded completion flags from agent for action '{}': partial={}, complete={}",
+                        actionName, isPartial, isComplete);
+            } else {
+                // Legacy action name without completion info - use defaults
+                logger.debug("Using default completion flags for action '{}': partial={}, complete={}",
+                        actionName, isPartial, isComplete);
+            }
+
+            // Create the reply message with agent-determined flags
+            AgentResponse replyMessage = new AgentResponse(content, correlationId, processId, actionName);
+
+            // Set the completion flags as determined by the agent
+            replyMessage.setIsPartial(isPartial);
+            replyMessage.setIsComplete(isComplete);
+            replyMessage.setAgentType("reviewer");
+
+            logger.info("Sending reply message to queue for correlationId: {}, action: {}, isPartial: {}, isComplete: {}",
+                    correlationId, actionName, isPartial, isComplete);
             logger.debug("Reply message content: {}", replyMessage);
 
             // Send the message to the reply queue with correlation ID in headers
@@ -73,8 +107,8 @@ public class ResponsePublisher implements OutputChannel {
                     }
             );
 
-            logger.info("Successfully sent reply message for correlationId: {} and processId: {}",
-                    correlationId, processId);
+            logger.info("Successfully sent {} reply message for correlationId: {} and processId: {}",
+                    isComplete ? "final" : "partial", correlationId, processId);
 
         } catch (Exception e) {
             logger.error("Error sending reply message for correlationId: {} and processId: {}",
