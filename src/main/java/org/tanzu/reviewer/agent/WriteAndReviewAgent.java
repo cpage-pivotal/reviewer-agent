@@ -68,8 +68,7 @@ public class WriteAndReviewAgent {
                         userInput.getContent()
                 ).trim());
 
-        // This is the FINAL action - mark as complete
-        sendUpdate(context, review, "reviewStory", false, true);
+        sendUpdate(context, review, "reviewStory", true);
 
         return new ReviewedStory(
                 story,
@@ -99,28 +98,25 @@ public class WriteAndReviewAgent {
                 userInput.getContent()
         ).trim(), Story.class);
 
-        // This is a PARTIAL response - more actions will follow
-        sendUpdate(context, result.text(), "craftStory", true, false);
+        sendUpdate(context, result.text(), "craftStory", false);
 
         return result;
     }
 
     /**
-     * Send an update with explicit completion flags encoded in the action name.
+     * Send an update with explicit completion flag encoded in the action name.
      * Only the agent knows when it's sending the final message.
      *
      * @param context Operation context
      * @param content Message content
      * @param action Action name for identification
-     * @param isPartial True if this is a partial response (more messages expected)
      * @param isComplete True if this is the final response in the sequence
      */
     private static void sendUpdate(OperationContext context, String content, String action,
-                                   boolean isPartial, boolean isComplete) {
+                                   boolean isComplete) {
 
         // Encode completion information in the action name for ResponsePublisher to decode
-        String enhancedActionName = String.format("%s|partial:%s|complete:%s",
-                action, isPartial, isComplete);
+        String enhancedActionName = String.format("%s|complete:%s", action, isComplete);
 
         context.getProcessContext().getOutputChannel().send(
                 new AssistantMessageOutputChannelEvent(

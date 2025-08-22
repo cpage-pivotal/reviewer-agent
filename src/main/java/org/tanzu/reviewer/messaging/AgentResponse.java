@@ -2,6 +2,9 @@ package org.tanzu.reviewer.messaging;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Response message sent to cf-mcp-client via RabbitMQ.
+ */
 public class AgentResponse {
 
     @JsonProperty("content")
@@ -22,12 +25,8 @@ public class AgentResponse {
     @JsonProperty("status")
     private String status;
 
-    // NEW FIELDS to match AgentResponse expectation
     @JsonProperty("agentType")
     private String agentType;
-
-    @JsonProperty("isPartial")
-    private Boolean isPartial;
 
     @JsonProperty("isComplete")
     private Boolean isComplete;
@@ -38,9 +37,7 @@ public class AgentResponse {
     public AgentResponse() {
         this.timestamp = System.currentTimeMillis();
         this.status = "success";
-        // Set defaults for new fields
         this.agentType = "reviewer";
-        this.isPartial = false;
         this.isComplete = true;
         this.metadata = null;
     }
@@ -102,21 +99,12 @@ public class AgentResponse {
         this.status = status;
     }
 
-    // NEW GETTERS AND SETTERS for AgentResponse compatibility
     public String getAgentType() {
         return agentType;
     }
 
     public void setAgentType(String agentType) {
         this.agentType = agentType;
-    }
-
-    public Boolean getIsPartial() {
-        return isPartial;
-    }
-
-    public void setIsPartial(Boolean isPartial) {
-        this.isPartial = isPartial;
     }
 
     public Boolean getIsComplete() {
@@ -137,7 +125,7 @@ public class AgentResponse {
 
     @Override
     public String toString() {
-        return "AgentReplyMessage{" +
+        return "AgentResponse{" +
                 "content='" + content + '\'' +
                 ", correlationId='" + correlationId + '\'' +
                 ", processId='" + processId + '\'' +
@@ -145,7 +133,6 @@ public class AgentResponse {
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +
                 ", agentType='" + agentType + '\'' +
-                ", isPartial=" + isPartial +
                 ", isComplete=" + isComplete +
                 ", metadata=" + metadata +
                 '}';

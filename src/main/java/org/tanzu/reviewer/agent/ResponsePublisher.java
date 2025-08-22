@@ -57,42 +57,39 @@ public class ResponsePublisher implements OutputChannel {
      */
     private void sendReplyMessage(String content, String correlationId, String processId, String name) {
         try {
-            // Decode completion flags from enhanced action name set by the agent
+            // Decode completion flag from enhanced action name set by the agent
             String actionName = name;
-            boolean isPartial = false;
-            boolean isComplete = true; // Default to complete for backward compatibility
+            boolean isComplete = true;
 
-            if (name != null && name.contains("|")) {
-                // Parse enhanced action name: "craftStory|partial:true|complete:false"
+            if (name != null && name.contains("|complete:")) {
+                // Parse enhanced action name: "craftStory|complete:false"
                 String[] parts = name.split("\\|");
                 actionName = parts[0]; // Extract original action name
 
                 for (String part : parts) {
-                    if (part.startsWith("partial:")) {
-                        isPartial = Boolean.parseBoolean(part.substring("partial:".length()));
-                    } else if (part.startsWith("complete:")) {
+                    if (part.startsWith("complete:")) {
                         isComplete = Boolean.parseBoolean(part.substring("complete:".length()));
+                        break;
                     }
                 }
 
-                logger.debug("Decoded completion flags from agent for action '{}': partial={}, complete={}",
-                        actionName, isPartial, isComplete);
+                logger.debug("Decoded completion flag from agent for action '{}': complete={}",
+                        actionName, isComplete);
             } else {
-                // Legacy action name without completion info - use defaults
-                logger.debug("Using default completion flags for action '{}': partial={}, complete={}",
-                        actionName, isPartial, isComplete);
+                // Legacy action name without completion info - use default
+                logger.debug("Using default completion flag for action '{}': complete={}",
+                        actionName, isComplete);
             }
 
-            // Create the reply message with agent-determined flags
+            // Create the reply message with agent-determined flag
             AgentResponse replyMessage = new AgentResponse(content, correlationId, processId, actionName);
 
-            // Set the completion flags as determined by the agent
-            replyMessage.setIsPartial(isPartial);
+            // Set the completion flag as determined by the agent
             replyMessage.setIsComplete(isComplete);
             replyMessage.setAgentType("reviewer");
 
-            logger.info("Sending reply message to queue for correlationId: {}, action: {}, isPartial: {}, isComplete: {}",
-                    correlationId, actionName, isPartial, isComplete);
+            logger.info("Sending reply message to queue for correlationId: {}, action: {}, isComplete: {}",
+                    correlationId, actionName, isComplete);
             logger.debug("Reply message content: {}", replyMessage);
 
             // Send the message to the reply queue with correlation ID in headers
