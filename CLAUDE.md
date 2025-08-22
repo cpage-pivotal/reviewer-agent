@@ -34,9 +34,9 @@ This is a Spring Boot application that implements an AI agent system using the E
 
 **RabbitMQ Messaging System**
 - `RabbitMQConfiguration.java` - Defines queues, exchanges, and bindings
-- `AgentRequestListener.java` - Handles incoming requests from `reviewer.agent.request` queue
+- `AgentRequestListener.java` - Handles incoming requests from `agent.reviewer.request` queue
 - `AgentProcessCorrelationService.java` - Manages correlation between processes and external requests
-- `ResponsePublisher.java` - Publishes results to `reviewer.agent.reply` queue
+- `ResponsePublisher.java` - Publishes results to `agent.reviewer.reply` queue
 - Uses Jackson JSON message conversion for serialization
 
 **Message Flow**
