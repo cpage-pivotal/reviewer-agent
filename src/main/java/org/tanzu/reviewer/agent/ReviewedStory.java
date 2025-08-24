@@ -41,4 +41,8 @@ record ReviewedStory(
                         .format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy"))
         ).trim();
     }
+
+    public String status() {
+        return "Reviewed the story:\n\n" + review;
+    }
 }

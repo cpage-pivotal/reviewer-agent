@@ -68,13 +68,14 @@ public class WriteAndReviewAgent {
                         userInput.getContent()
                 ).trim());
 
-        sendUpdate(context, review, "reviewStory", true);
-
-        return new ReviewedStory(
+        ReviewedStory result = new ReviewedStory(
                 story,
                 review,
                 Personas.REVIEWER
         );
+
+        sendUpdate(context, result.status(), "reviewStory", true);
+        return result;
     }
 
     @Action
@@ -98,8 +99,7 @@ public class WriteAndReviewAgent {
                 userInput.getContent()
         ).trim(), Story.class);
 
-        sendUpdate(context, result.text(), "craftStory", false);
-
+        sendUpdate(context, result.status(), "craftStory", false);
         return result;
     }
 
