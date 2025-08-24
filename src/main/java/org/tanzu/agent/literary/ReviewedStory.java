@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.literary;
 
 import com.embabel.agent.domain.library.HasContent;
 import com.embabel.agent.prompt.persona.Persona;

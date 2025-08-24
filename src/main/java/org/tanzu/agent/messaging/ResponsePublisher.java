@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.messaging;
 
 import com.embabel.agent.channel.AssistantMessageOutputChannelEvent;
 import com.embabel.agent.channel.OutputChannel;
@@ -8,20 +8,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tanzu.reviewer.messaging.AgentProcessCorrelationService;
-import org.tanzu.reviewer.messaging.AgentResponse;
-import org.tanzu.reviewer.messaging.RabbitMQConfiguration;
 
 public class ResponsePublisher implements OutputChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(ResponsePublisher.class);
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
+    private final AgentProcessCorrelationService correlationService;
 
-    @Autowired
-    private AgentProcessCorrelationService correlationService;
+    public ResponsePublisher(RabbitTemplate rabbitTemplate, AgentProcessCorrelationService correlationService) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.correlationService = correlationService;
+    }
 
     @Override
     public void send(@NotNull OutputChannelEvent event) {

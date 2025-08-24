@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.literary;
 
 import com.embabel.agent.prompt.persona.Persona;
 import com.embabel.common.ai.prompt.PromptContributionLocation;

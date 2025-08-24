@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.messaging;
+package org.tanzu.agent.messaging;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfiguration {
 
-    public static final String REQUEST_QUEUE = "agent.reviewer.request";
-    public static final String REPLY_QUEUE = "agent.reviewer.reply";
-    public static final String EXCHANGE_NAME = "agent.reviewer.exchange";
-    public static final String REQUEST_ROUTING_KEY = "agent.reviewer.request";
-    public static final String REPLY_ROUTING_KEY = "agent.reviewer.reply";
+    public static final String REQUEST_QUEUE = "reviewer.request";
+    public static final String REPLY_QUEUE = "reviewer.reply";
+    public static final String EXCHANGE_NAME = "agents";
+    public static final String REQUEST_ROUTING_KEY = "reviewer.request";
+    public static final String REPLY_ROUTING_KEY = "reviewer.reply";
 
     @Bean
     public DirectExchange reviewerAgentExchange() {

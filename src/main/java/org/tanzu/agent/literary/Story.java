@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.literary;
 
 record Story(String text) {
 

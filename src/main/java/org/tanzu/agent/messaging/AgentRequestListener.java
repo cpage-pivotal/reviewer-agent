@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.messaging;
+package org.tanzu.agent.messaging;
 
 import com.embabel.agent.core.Agent;
 import com.embabel.agent.core.AgentPlatform;

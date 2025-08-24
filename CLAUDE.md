@@ -23,7 +23,7 @@ This is a Spring Boot application that implements an AI agent system using the E
 
 **Main Application (`TemplateApplication.java`)**
 - Entry point with `@EnableAgents` annotation to activate the Embabel agent framework
-- Located in `org.tanzu.reviewer` package
+- Located in `org.tanzu.agent` package
 
 **Agent Implementation (`WriteAndReviewAgent.java`)**
 - Primary agent that generates stories and reviews them

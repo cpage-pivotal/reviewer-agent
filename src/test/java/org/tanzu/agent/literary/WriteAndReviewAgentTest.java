@@ -1,4 +1,4 @@
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.literary;
 
 import com.embabel.agent.domain.io.UserInput;
 import com.embabel.agent.testing.unit.FakeOperationContext;

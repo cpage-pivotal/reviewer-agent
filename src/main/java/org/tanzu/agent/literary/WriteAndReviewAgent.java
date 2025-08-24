@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tanzu.reviewer.agent;
+package org.tanzu.agent.literary;
 
 import com.embabel.agent.api.annotation.AchievesGoal;
 import com.embabel.agent.api.annotation.Action;
@@ -22,8 +22,8 @@ import com.embabel.agent.api.annotation.Export;
 import com.embabel.agent.api.common.OperationContext;
 import com.embabel.agent.api.common.PromptRunner;
 import com.embabel.agent.channel.AssistantMessageOutputChannelEvent;
+import com.embabel.agent.config.models.OpenAiModels;
 import com.embabel.agent.domain.io.UserInput;
-import com.embabel.common.ai.model.AutoModelSelectionCriteria;
 import com.embabel.common.ai.model.LlmOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -49,7 +49,7 @@ public class WriteAndReviewAgent {
     @Action
     ReviewedStory reviewStory(UserInput userInput, Story story, OperationContext context) {
         String review = context.promptRunner()
-                .withLlm(LlmOptions.fromCriteria(AutoModelSelectionCriteria.INSTANCE))
+                .withLlm(LlmOptions.fromModel(OpenAiModels.GPT_41_MINI))
                 .withPromptContributor(Personas.REVIEWER)
                 .generateText(String.format("""
                                 You will be given a short story to review.
@@ -83,7 +83,7 @@ public class WriteAndReviewAgent {
 
         PromptRunner runner = context.promptRunner()
                 // Higher temperature for more creative output
-                .withLlm(LlmOptions.fromCriteria(AutoModelSelectionCriteria.INSTANCE, 0.9))
+                .withLlm(LlmOptions.fromModel(OpenAiModels.GPT_41_MINI, 0.9))
                 .withPromptContributor(Personas.WRITER);
 
         Story result = runner.createObject(String.format("""
