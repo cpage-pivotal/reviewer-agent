@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import java.util.List;
-
 /**
  * Configuration to register the A2AOutputEmitter as a default listener
  * for all agent processes when running as an A2A server.
@@ -15,7 +13,7 @@ import java.util.List;
  * The listener will automatically emit Story and ReviewedStory outputs
  * as A2A messages when they are bound during action execution.
  */
-@Configuration
+//@Configuration
 @Profile("a2a")
 public class SimpleA2AConfiguration {
 
@@ -26,6 +24,6 @@ public class SimpleA2AConfiguration {
     @Bean
     public ProcessOptions.Builder defaultProcessOptionsBuilder(A2AOutputEmitter a2aOutputEmitter) {
         return new ProcessOptions.Builder()
-                .withListeners(List.of(a2aOutputEmitter));
+                .listener(a2aOutputEmitter);
     }
 }

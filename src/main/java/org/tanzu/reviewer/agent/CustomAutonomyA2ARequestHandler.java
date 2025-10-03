@@ -69,18 +69,18 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                 streamingHandler.sendStreamEvent(
                         streamId,
                         new TaskStatusUpdateEvent.Builder()
-                                .taskId(params.getMessage().getTaskId())
-                                .contextId(params.getMessage().getContextId())
+                                .taskId(params.message().getTaskId())
+                                .contextId(params.message().getContextId())
                                 .status(createWorkingTaskStatus(params, "Task started..."))
                                 .build()
                 );
 
                 // Extract intent from message
-                String intent = params.getMessage().getParts().stream()
+                String intent = params.message().getParts().stream()
                         .filter(part -> part instanceof TextPart)
                         .map(part -> ((TextPart) part).getText())
                         .findFirst()
-                        .orElse("Task " + params.getMessage().getTaskId());
+                        .orElse("Task " + params.message().getTaskId());
 
                 logger.info("Executing task with intent: '{}'", intent);
 
@@ -88,7 +88,7 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                 AgentProcessExecution result = autonomy.chooseAndRunAgent(
                         intent,
                         new ProcessOptions.Builder()
-                                .withListeners(List.of(a2aOutputEmitter))
+                                .listener(a2aOutputEmitter)
                                 .build()
                 );
 
@@ -98,22 +98,22 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                 streamingHandler.sendStreamEvent(
                         streamId,
                         new TaskStatusUpdateEvent.Builder()
-                                .taskId(params.getMessage().getTaskId())
-                                .contextId(ensureContextId(params.getMessage().getContextId()))
+                                .taskId(params.message().getTaskId())
+                                .contextId(ensureContextId(params.message().getContextId()))
                                 .status(createWorkingTaskStatus(params, "Processing task..."))
                                 .build()
                 );
 
                 // Send final result
                 Task taskResult = new Task.Builder()
-                        .id(params.getMessage().getTaskId())
+                        .id(params.message().getTaskId())
                         .contextId("ctx_" + UUID.randomUUID())
                         .status(createCompletedTaskStatus(params))
-                        .history(List.of(params.getMessage()))
+                        .history(List.of(params.message()))
                         .artifacts(List.of(
                                 createResultArtifact(result,
-                                        params.getConfiguration() != null ?
-                                                params.getConfiguration().getAcceptedOutputModes() : null)
+                                        params.configuration() != null ?
+                                                params.configuration().acceptedOutputModes() : null)
                         ))
                         .metadata(null)
                         .build();
@@ -126,8 +126,8 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                     streamingHandler.sendStreamEvent(
                             streamId,
                             new TaskStatusUpdateEvent.Builder()
-                                    .taskId(params.getMessage().getTaskId())
-                                    .contextId(ensureContextId(params.getMessage().getContextId()))
+                                    .taskId(params.message().getTaskId())
+                                    .contextId(ensureContextId(params.message().getContextId()))
                                     .status(createFailedTaskStatus(params, e))
                                     .build()
                     );
@@ -151,8 +151,8 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                         .messageId(UUID.randomUUID().toString())
                         .role(Message.Role.AGENT)
                         .parts(List.of(new TextPart(textPart)))
-                        .contextId(params.getMessage().getContextId())
-                        .taskId(params.getMessage().getTaskId())
+                        .contextId(params.message().getContextId())
+                        .taskId(params.message().getTaskId())
                         .build(),
                 LocalDateTime.now()
         );
@@ -165,8 +165,8 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                         .messageId(UUID.randomUUID().toString())
                         .role(Message.Role.AGENT)
                         .parts(List.of(new TextPart("Task completed successfully")))
-                        .contextId(params.getMessage().getContextId())
-                        .taskId(params.getMessage().getTaskId())
+                        .contextId(params.message().getContextId())
+                        .taskId(params.message().getTaskId())
                         .build(),
                 LocalDateTime.now()
         );
@@ -179,8 +179,8 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                         .messageId(UUID.randomUUID().toString())
                         .role(Message.Role.AGENT)
                         .parts(List.of(new TextPart("Error: " + e.getMessage())))
-                        .contextId(params.getMessage().getContextId())
-                        .taskId(params.getMessage().getTaskId())
+                        .contextId(params.message().getContextId())
+                        .taskId(params.message().getTaskId())
                         .build(),
                 LocalDateTime.now()
         );

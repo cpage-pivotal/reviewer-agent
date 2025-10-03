@@ -76,7 +76,7 @@ public class A2AOutputEmitter implements AgenticEventListener {
             emitArtifact(streamId, "reviewed_story", value, Map.of(
                     "story", reviewedStory.story().text(),
                     "review", reviewedStory.review(),
-                    "reviewer", reviewedStory.reviewer().name(),
+                    "reviewer", reviewedStory.reviewer().getName(),
                     "type", "reviewed_story"
             ));
         }
