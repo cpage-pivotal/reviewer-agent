@@ -23,7 +23,6 @@ import com.embabel.agent.api.common.OperationContext;
 import com.embabel.agent.domain.io.UserInput;
 import com.embabel.agent.domain.library.HasContent;
 import com.embabel.agent.prompt.persona.Persona;
-import com.embabel.agent.prompt.persona.RoleGoalBackstory;
 import com.embabel.common.ai.model.LlmOptions;
 import com.embabel.common.core.types.Timestamped;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,20 +32,6 @@ import org.springframework.lang.NonNull;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-
-abstract class Personas {
-    static final RoleGoalBackstory WRITER = RoleGoalBackstory
-            .withRole("Creative Storyteller")
-            .andGoal("Write engaging and imaginative stories")
-            .andBackstory("Has a PhD in French literature; used to work in a circus");
-
-    static final Persona REVIEWER = new Persona(
-            "Media Book Review",
-            "New York Times Book Reviewer",
-            "Professional and insightful",
-            "Help guide readers toward good stories"
-    );
-}
 
 
 @Agent(description = "Generate a story based on user input and review it")
