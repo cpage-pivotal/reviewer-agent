@@ -8,21 +8,26 @@ import com.embabel.agent.core.ProcessOptions;
 import io.a2a.spec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
  * Custom A2A request handler that emits intermediate Story and ReviewedStory outputs
- * as A2A messages during streaming execution.
+ * as A2A messages during execution.
+ *
+ * Handles both streaming and non-streaming requests.
  */
 @Service
 @Profile("a2a")
+@Primary
 public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomAutonomyA2ARequestHandler.class);
@@ -43,21 +48,91 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
 
     @Override
     public JSONRPCResponse<?> handleJsonRpc(NonStreamingJSONRPCRequest<?> request) {
-        // Implement non-streaming handler if needed
-        throw new UnsupportedOperationException("Non-streaming not implemented in this example");
+        if (request instanceof SendMessageRequest messageRequest) {
+            return handleNonStreamingMessage(messageRequest);
+        }
+        throw new UnsupportedOperationException("Method " + request.getMethod() + " is not supported");
     }
 
     @Override
     public SseEmitter handleJsonRpcStream(StreamingJSONRPCRequest<?> request) {
         if (request instanceof SendStreamingMessageRequest streamRequest) {
-            return handleMessageStream(streamRequest);
+            return handleStreamingMessage(streamRequest);
         }
         throw new UnsupportedOperationException("Method " + request.getMethod() + " is not supported for streaming");
     }
 
-    private SseEmitter handleMessageStream(SendStreamingMessageRequest request) {
+    private SendMessageResponse handleNonStreamingMessage(SendMessageRequest request) {
         MessageSendParams params = request.getParams();
-        String streamId = request.getId() != null ? request.getId().toString() : UUID.randomUUID().toString();
+
+        try {
+            // Start collecting artifacts for this non-streaming request
+            a2aOutputEmitter.startCollecting();
+
+            // Extract intent from message
+            String intent = extractIntent(params.message());
+
+            logger.info("Handling message send request with intent: '{}'", intent);
+
+            // Execute with custom ProcessOptions that include our listener
+            AgentProcessExecution result = autonomy.chooseAndRunAgent(
+                    intent,
+                    new ProcessOptions.Builder()
+                            .listener(a2aOutputEmitter)
+                            .build()
+            );
+
+            logger.debug("Task execution result: {}", result);
+
+            // Collect all artifacts (final result + intermediate artifacts)
+            List<Artifact> allArtifacts = new ArrayList<>(a2aOutputEmitter.getCollectedArtifacts());
+
+            // Add the final result artifact
+            allArtifacts.add(createResultArtifact(
+                    result,
+                    params.configuration() != null ?
+                            params.configuration().acceptedOutputModes() : null
+            ));
+
+            // Build the response with all artifacts
+            Task taskResult = new Task.Builder()
+                    .id(params.message().getTaskId())
+                    .contextId(ensureContextId(params.message().getContextId()))
+                    .status(createCompletedTaskStatus(params))
+                    .history(List.of(params.message()))
+                    .artifacts(allArtifacts)
+                    .metadata(null)
+                    .build();
+
+            logger.info("Handled message send request with {} artifacts", allArtifacts.size());
+
+            // Return response with Task as EventKind
+            return new SendMessageResponse(request.getId(), taskResult);
+
+        } catch (Exception e) {
+            logger.error("Error handling non-streaming message request", e);
+
+            Task errorTask = new Task.Builder()
+                    .id(params.message().getTaskId())
+                    .contextId(ensureContextId(params.message().getContextId()))
+                    .status(createFailedTaskStatus(params, e))
+                    .history(List.of(params.message()))
+                    .artifacts(List.of())
+                    .metadata(null)
+                    .build();
+
+            return new SendMessageResponse(request.getId(), errorTask);
+        } finally {
+            // Clean up thread-local storage
+            a2aOutputEmitter.clear();
+        }
+    }
+
+    private SseEmitter handleStreamingMessage(SendStreamingMessageRequest request) {
+        MessageSendParams params = request.getParams();
+        String streamId = request.getId() != null ?
+                request.getId().toString() : UUID.randomUUID().toString();
+
         SseEmitter emitter = streamingHandler.createStream(streamId);
 
         Thread.startVirtualThread(() -> {
@@ -76,13 +151,9 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                 );
 
                 // Extract intent from message
-                String intent = params.message().getParts().stream()
-                        .filter(part -> part instanceof TextPart)
-                        .map(part -> ((TextPart) part).getText())
-                        .findFirst()
-                        .orElse("Task " + params.message().getTaskId());
+                String intent = extractIntent(params.message());
 
-                logger.info("Executing task with intent: '{}'", intent);
+                logger.info("Executing streaming task with intent: '{}'", intent);
 
                 // Execute with custom ProcessOptions that include our listener
                 AgentProcessExecution result = autonomy.chooseAndRunAgent(
@@ -136,12 +207,20 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
                 }
             } finally {
                 // Clean up thread-local storage
-                a2aOutputEmitter.clearStreamId();
+                a2aOutputEmitter.clear();
                 streamingHandler.closeStream(streamId);
             }
         });
 
         return emitter;
+    }
+
+    private String extractIntent(Message message) {
+        return message.getParts().stream()
+                .filter(part -> part instanceof TextPart)
+                .map(part -> ((TextPart) part).getText())
+                .findFirst()
+                .orElse("Task " + message.getTaskId());
     }
 
     private TaskStatus createWorkingTaskStatus(MessageSendParams params, String textPart) {
@@ -172,13 +251,13 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
         );
     }
 
-    private TaskStatus createFailedTaskStatus(MessageSendParams params, Exception e) {
+    private TaskStatus createFailedTaskStatus(MessageSendParams params, Exception error) {
         return new TaskStatus(
                 TaskState.FAILED,
                 new Message.Builder()
                         .messageId(UUID.randomUUID().toString())
                         .role(Message.Role.AGENT)
-                        .parts(List.of(new TextPart("Error: " + e.getMessage())))
+                        .parts(List.of(new TextPart("Task failed: " + error.getMessage())))
                         .contextId(params.message().getContextId())
                         .taskId(params.message().getTaskId())
                         .build(),
@@ -186,17 +265,19 @@ public class CustomAutonomyA2ARequestHandler implements A2ARequestHandler {
         );
     }
 
-    private String ensureContextId(String providedContextId) {
-        return providedContextId != null ? providedContextId : "ctx_" + UUID.randomUUID().toString();
-    }
+    private Artifact createResultArtifact(AgentProcessExecution result, List<String> acceptedOutputModes) {
+        Map<String, Object> data = Map.of(
+                "result", result.getOutput().toString(),
+                "type", "final_result"
+        );
 
-    private Artifact createResultArtifact(
-            AgentProcessExecution result,
-            List<String> acceptedOutputModes
-    ) {
         return new Artifact.Builder()
                 .artifactId(UUID.randomUUID().toString())
-                .parts(List.of(new DataPart(Map.of("output", result.getOutput()))))
+                .parts(List.of(new DataPart(data)))
                 .build();
+    }
+
+    private String ensureContextId(String contextId) {
+        return contextId != null ? contextId : "ctx_" + UUID.randomUUID();
     }
 }
